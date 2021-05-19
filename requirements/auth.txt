@@ -1,0 +1,4 @@
+Flask==1.1.4
+Flask-SQLAlchemy
+gunicorn
+flask-restx
