@@ -2,3 +2,6 @@ Flask==1.1.4
 Flask-SQLAlchemy
 gunicorn
 flask-restx
+pydantic[email]
+black
+isort
