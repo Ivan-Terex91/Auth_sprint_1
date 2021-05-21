@@ -5,3 +5,5 @@ flask-restx
 pydantic[email]
 black
 isort
+redis
+psycopg2-binary

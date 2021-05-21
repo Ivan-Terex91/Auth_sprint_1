@@ -1,5 +1,6 @@
-from core.api import Resource
 from flask_restx import Namespace
+
+from core.api import Resource
 from models.auth import refresh_token_model, signup_model, tokens_model
 
 ns = Namespace("Auth Namespace")
