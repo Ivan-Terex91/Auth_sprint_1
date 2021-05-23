@@ -3,3 +3,4 @@ uvicorn
 aioredis
 elasticsearch[async]
 orjson
+httpx

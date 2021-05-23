@@ -17,3 +17,6 @@ ELASTIC_DSN = os.getenv("ELASTIC_DSN", "http://localhost:9200/")
 
 # Корень проекта
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Url для сервиса аутентификации пользователей
+AUTH_URL = os.getenv("AUTH_URL", "http://auth:80/")

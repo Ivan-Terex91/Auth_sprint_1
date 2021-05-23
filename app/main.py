@@ -9,7 +9,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from api.v1 import film, genre, person
-from core import config, json
+from core import auth, config, json
+from core.auth import AuthClient
 from core.logger import LOGGING
 from core.utils import async_iterator_wrapper
 from db import elastic, redis
@@ -41,6 +42,9 @@ class CacheMiddleware(BaseHTTPMiddleware):
         if response.status_code == 307:
             return RedirectResponse(url=response.headers.get("location"))
 
+        if response.status_code == 401:
+            return response
+
         resp_body = [section async for section in response.__dict__["body_iterator"]]
         response.__setattr__("body_iterator", async_iterator_wrapper(resp_body))
         resp_body = resp_body[0]
@@ -62,6 +66,8 @@ async def startup():
         address=config.REDIS_DSN, db=0, minsize=10, maxsize=20, encoding="utf-8"
     )
     elastic.es = AsyncElasticsearch(hosts=[config.ELASTIC_DSN])
+
+    auth.auth_client = AuthClient(base_url=config.AUTH_URL)
 
     cache_storage = await get_cache_storage()
     app.add_middleware(CacheMiddleware, cache_storage=cache_storage)

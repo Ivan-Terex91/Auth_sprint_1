@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import UUID4, BaseModel
 
+from core.auth import get_current_user
 from services.film import FilmService, get_film_service
 
 router = APIRouter()
@@ -45,7 +46,9 @@ class FilmListModel(BaseModel):
 
 @router.get("/{film_id:uuid}/", response_model=FilmDetailsModel)
 async def film_details(
-    film_id: UUID, film_service: FilmService = Depends(get_film_service)
+    film_id: UUID,
+    film_service: FilmService = Depends(get_film_service),
+    current_user=Depends(get_current_user),
 ) -> FilmDetailsModel:
     film = await film_service.get_by_id(film_id)
     if not film:
@@ -70,6 +73,7 @@ async def film_list(
     page_size: int = Query(default=50, ge=1, alias="page[size]"),
     filter_genre_id: UUID = Query(None, alias="filter[genre]"),
     film_service: FilmService = Depends(get_film_service),
+    current_user=Depends(get_current_user),
 ):
     sort_value, sort_order = sort.name.split("__")
 
@@ -93,6 +97,7 @@ async def film_search(
     size: Optional[int] = 50,
     query: Optional[str] = "",
     film_service: FilmService = Depends(get_film_service),
+    current_user=Depends(get_current_user),
 ) -> List[FilmListModel]:
     films = await film_service.search(page=page, size=size, match_obj=query)
     return [FilmListModel(**film) for film in films]
