@@ -1,4 +1,5 @@
 import uuid
+from datetime import timezone
 
 from sqlalchemy import Column, DateTime, ForeignKey, String, create_engine
 from sqlalchemy.dialects.postgresql import ENUM, UUID
@@ -31,8 +32,25 @@ class User(Base):
         return f"<User {self.first_name} - {self.last_name}>"
 
 
+class RefreshToken(Base):
+    __tablename__ = "refresh_token"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+    )
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
+    token = Column(String, index=True, nullable=False)
+    access_token = Column(String, index=True, nullable=False)
+    exp = Column(DateTime, nullable=False)
+
+
 class History(Base):
     __tablename__ = "history"
+
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
