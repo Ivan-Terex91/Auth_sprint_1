@@ -3,4 +3,3 @@
 fmt:
 	black .
 	isort .
-

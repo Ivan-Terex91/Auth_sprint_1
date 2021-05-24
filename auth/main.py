@@ -1,32 +1,38 @@
+from flask import Flask
+from pydantic import BaseSettings, PostgresDsn, RedisDsn
+from redis import Redis
+
+from api import api
+from api.staff.v1.auth import ns as staff_auth_ns
 from api.v1.auth import ns as auth_ns
 from api.v1.users import ns as profile_ns
-from core.db import db
-from flask import Flask
-from flask_restx import Api
-from flask_sqlalchemy import SQLAlchemy
-from services.auth import TokenService
-from services.user import (ChangePasswordService, UserHistoryService,
-                           UserService)
+from core.db import init_session
+from services import Services
 
 
-class Services:
-    def __init__(self, db):
-        self.user = UserService(db)
-        self.user_history = UserHistoryService(db)
-        self.change_password = ChangePasswordService(db)
-        self.token_service = TokenService(db)
+class Settings(BaseSettings):
+    redis_dsn: RedisDsn
+    postgres_dsn: PostgresDsn
+    secret_key: str
 
 
 def create_app():
+    settings = Settings()
+
     app = Flask(__name__)
-    # db = SQLAlchemy(app)
+    app.config["ERROR_404_HELP"] = False
 
-    api = Api(app, title="Auth")
+    session = init_session(f"{str(settings.postgres_dsn)}/auth")
+    redis = Redis(host=settings.redis_dsn.host, port=settings.redis_dsn.port, db=1)
 
+    api.init_app(app)
     api.add_namespace(profile_ns, "/api/v1/profile")
     api.add_namespace(auth_ns, "/api/v1/auth")
+    api.add_namespace(staff_auth_ns, "/staff/api/v1/auth")
 
-    api.services = Services(db)
+    services = Services(session, redis, settings.secret_key)
+    app.extensions["services"] = services
+    api.services = services
 
     return app
 
