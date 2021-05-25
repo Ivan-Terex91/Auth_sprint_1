@@ -8,3 +8,4 @@ isort
 redis
 pyjwt
 psycopg2-binary
+passlib

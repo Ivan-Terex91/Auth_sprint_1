@@ -7,9 +7,12 @@ from api.v1.models.auth import (
     RefreshTokensResponseModel,
     SignupResponseModel,
 )
+from api.v1.models.users import LoginRequestModel, UserModel
 from core.api import Resource, login_required
 
 ns = Namespace("Auth Namespace")
+
+
 # signup = ns.add_model(name="signup", definition=signup_model)
 # tokens = ns.add_model(name="tokens", definition=tokens_model)
 # refresh_token = ns.add_model(name="refresh_token", definition=refresh_token_model)
@@ -17,34 +20,34 @@ ns = Namespace("Auth Namespace")
 
 @ns.route("/signup/")
 class SignupView(Resource):
-    # @ns.expect(signup)
-    @ns.response(409, "The email you entered is already in use")
-    @ns.marshal_with(SignupResponseModel, "Successfully signup in", code=201)
+    @ns.expect(LoginRequestModel, validate=True)
+    @ns.response(409, description="This email address is already in use")
+    @ns.response(400, description="Bad request")
+    @ns.response(201, description="Successfully signup in", model=SignupResponseModel)
     def post(self):
         """Signup new user"""
-        user_id = "569c6eb9-d49c-483f-89ee-4c6c5354daf3"
-        access_token, refresh_token = self.services.token_service.create_tokens(user_id)
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
+        self.services.user.create(**self.api.payload)
+        return {"message": "Successfully signup in"}, 201
 
 
 @ns.route("/login/")
 class LoginView(Resource):
-    # @ns.expect(signup)
-    @ns.response(404, "User not found")
-    @ns.marshal_with(LoginResponseModel, "Successfully logged in")
+    @ns.expect(LoginRequestModel, validate=True)
+    @ns.response(404, description="User not found")
+    @ns.response(400, description="Bad request")
+    @ns.response(401, description="Unauthorized")
+    @ns.response(200, description="Successfully logged in", model=LoginResponseModel)
     def post(self):
         """Login in user"""
-        user_id = "569c6eb9-d49c-483f-89ee-4c6c5354daf3"
+        user = self.services.user.get_by_email_password(
+            email=self.api.payload.get("email"), password=self.api.payload.get("password")
+        )
+        if not user:
+            return {"message": "User not found"}, 404
+        user_id = user.id
         access_token, refresh_token = self.services.token_service.create_tokens(user_id)
 
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
+        return {"access_token": access_token, "refresh_token": refresh_token}, 200
 
 
 @ns.route("/logout/")
