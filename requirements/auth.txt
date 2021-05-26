@@ -9,3 +9,4 @@ redis
 pyjwt
 psycopg2-binary
 passlib
+user-agents

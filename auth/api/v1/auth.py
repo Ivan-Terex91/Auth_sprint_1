@@ -1,4 +1,4 @@
-from flask import g
+from flask import g, request
 from flask_restx import Namespace
 
 from api.v1.models.auth import (
@@ -10,12 +10,14 @@ from api.v1.models.auth import (
 from api.v1.models.users import LoginRequestModel, UserModel
 from core.api import Resource, login_required
 
-ns = Namespace("Auth Namespace")
-
-
-# signup = ns.add_model(name="signup", definition=signup_model)
-# tokens = ns.add_model(name="tokens", definition=tokens_model)
-# refresh_token = ns.add_model(name="refresh_token", definition=refresh_token_model)
+authorizations = {
+    "api_key": {
+        "type": "apiKey",
+        "in": "Header",
+        "name": "TOKEN",
+    }
+}
+ns = Namespace("Auth Namespace", authorizations=authorizations, security="api_key")
 
 
 @ns.route("/signup/")
@@ -45,19 +47,29 @@ class LoginView(Resource):
         if not user:
             return {"message": "User not found"}, 404
         user_id = user.id
+        user_agent = request.headers.get("User-Agent")
         access_token, refresh_token = self.services.token_service.create_tokens(user_id)
-
+        self.services.user_history.insert_entry(
+            user_id=user_id, action="login", user_agent=user_agent
+        )
         return {"access_token": access_token, "refresh_token": refresh_token}, 200
 
 
 @ns.route("/logout/")
+@ns.doc(security="api_key")
 class LogoutView(Resource):
     @login_required
+    @ns.response(401, description="Unauthorized")
     @ns.response(200, "Successfully logout")
     def post(self):
         """Logout user"""
+        token = request.headers.get("TOKEN")
+        user_data = self.services.token_service.decode_access_token(token)
+        user_agent = request.headers.get("User-Agent")
+        self.services.user_history.insert_entry(
+            user_id=user_data.user_id, action="logout", user_agent=user_agent
+        )
         self.services.token_service.remove_tokens(g.access_token)
-
         return "Successfully logout"
 
 

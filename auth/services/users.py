@@ -68,16 +68,3 @@ class UserService:
     def verify_password(self, password, password_hash):
         """Верификация пароля"""
         return pbkdf2_sha256.verify(password, password_hash)
-
-
-class UserHistoryService:
-    def __init__(self, db):
-        self.db = db
-
-    def get(self, user_id):
-        return {
-            "action": "string",
-            "datetime": "2021-05-20T10:57:06.441Z",
-            "user_agent": "string",
-            "user_device_type": "string",
-        }

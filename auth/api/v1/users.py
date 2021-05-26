@@ -1,6 +1,7 @@
 from flask import request
 from flask_restx import Namespace
 
+from api.v1.models.history import History
 from api.v1.models.users import ChangePassword, UserModel
 from core.api import Resource, login_required
 
@@ -54,13 +55,18 @@ class UserProfile(Resource):
         return {"message": "User not found"}, 404
 
 
-# @ns.response(404, "User not found")
-# @ns.route("/<user_id>/history/")
-# class UserHistory(Resource):
-#     @ns.response(200, "Successful getting history", user_history)
-#     def get(self, user_id):
-#         """Getting the user's login history"""
-#         return self.services.user_history.get(user_id)
+@ns.response(404, "User not found")
+@ns.doc(security="api_key")
+@ns.route("/history/")
+class UserHistory(Resource):
+    @login_required
+    @ns.response(401, description="Unauthorized")
+    @ns.marshal_with(History, as_list=True, code=200, description="Successful getting history")
+    def get(self):
+        """Getting the user's login history"""
+        token = request.headers.get("TOKEN")
+        user_data = self.services.token_service.decode_access_token(token)
+        return self.services.user_history.get_history(user_data.user_id)
 
 
 @ns.response(404, description="User not found")

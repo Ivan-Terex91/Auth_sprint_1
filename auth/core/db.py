@@ -1,5 +1,4 @@
 import uuid
-from datetime import timezone
 
 from sqlalchemy import Column, DateTime, ForeignKey, String, create_engine
 from sqlalchemy.dialects.postgresql import ENUM, UUID
@@ -58,14 +57,14 @@ class History(Base):
         unique=True,
         nullable=False,
     )
-    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
     action = Column(ENUM(Action), nullable=False)
     datetime = Column(DateTime, nullable=False)
     user_agent = Column(String, nullable=False)
-    user_device_type = Column(ENUM(DeviceType), nullable=False)
+    device_type = Column(ENUM(DeviceType), nullable=False)
 
     def __repr__(self):
-        return f"{self.user_id} - {self.action} - {self.datetime}"
+        return f"{self.user_id} - {self.action} - {self.datetime} - {self.device_type}"
 
 
 def init_session(dsn):
