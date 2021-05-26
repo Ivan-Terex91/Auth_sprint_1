@@ -42,7 +42,7 @@ class RefreshToken(Base):
         unique=True,
         nullable=False,
     )
-    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
     token = Column(String, index=True, nullable=False)
     access_token = Column(String, index=True, nullable=False)
     exp = Column(DateTime, nullable=False)

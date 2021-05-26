@@ -4,3 +4,7 @@ class NotFound(Exception):
 
 class AuthError(Exception):
     pass
+
+
+class EmailUsedError(Exception):
+    pass
