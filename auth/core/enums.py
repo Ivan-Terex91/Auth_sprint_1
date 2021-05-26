@@ -1,4 +1,4 @@
-from pydantic.schema import Enum
+from enum import Enum
 
 
 class Action(Enum):
@@ -7,5 +7,7 @@ class Action(Enum):
 
 
 class DeviceType(Enum):
-    desktop = "desktop"
-    smartphone = "smartphone"
+    pc = "pc"
+    mobile = "mobile"
+    tablet = "tablet"
+    undefined = "undefined"

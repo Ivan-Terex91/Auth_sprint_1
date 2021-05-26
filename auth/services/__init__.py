@@ -2,7 +2,8 @@ from flask import current_app
 from werkzeug.local import LocalProxy
 
 from services.auth import TokenService
-from services.users import UserHistoryService, UserService
+from services.history import UserHistoryService
+from services.users import UserService
 
 services = LocalProxy(lambda: current_app.extensions["services"])
 
