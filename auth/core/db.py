@@ -1,6 +1,14 @@
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, create_engine
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    PrimaryKeyConstraint,
+    String,
+    UniqueConstraint,
+    create_engine,
+)
 from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -47,14 +55,28 @@ class RefreshToken(Base):
     exp = Column(DateTime, nullable=False)
 
 
+def create_partition(target, connection, **kw) -> None:
+
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "history_at_pc" PARTITION OF "history" FOR VALUES IN ('pc')"""
+    )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "history_at_mobile" PARTITION OF "history" FOR VALUES IN ('mobile')"""
+    )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "history_at_tablet" PARTITION OF "history" FOR VALUES IN ('tablet')"""
+    )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "history_at_undefined" PARTITION OF "history" FOR VALUES IN ('undefined')"""
+    )
+
+
 class History(Base):
     __tablename__ = "history"
 
     id = Column(
         UUID(as_uuid=True),
-        primary_key=True,
         default=uuid.uuid4,
-        unique=True,
         nullable=False,
     )
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
@@ -62,6 +84,15 @@ class History(Base):
     datetime = Column(DateTime, nullable=False)
     user_agent = Column(String, nullable=False)
     device_type = Column(ENUM(DeviceType), nullable=False)
+
+    __table_args__ = (
+        PrimaryKeyConstraint(id, device_type),
+        UniqueConstraint(id, device_type),
+        {
+            "postgresql_partition_by": "LIST (device_type)",
+            "listeners": [("after_create", create_partition)],
+        },
+    )
 
     def __repr__(self):
         return f"{self.user_id} - {self.action} - {self.datetime} - {self.device_type}"
